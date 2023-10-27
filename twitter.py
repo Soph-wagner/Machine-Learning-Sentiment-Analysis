@@ -1,7 +1,7 @@
 """
-Author: Sophia Wagner
-Date: 10/25/2023
-Description: Program that uses a linear SVM to classify tweets as positive or negative
+Author: Denis Onwualu 
+Date:
+Description:
 """
 
 import numpy as np
@@ -92,13 +92,19 @@ def extract_dictionary(infile):
 
     word_list = {}
     with open(infile, 'r') as fid:
+        ### ========== TODO: START ========== ###
         # part 1-1: process each line to populate word_list
-        text = fid.read()
-        words = extract_words(text)
-
-        for word in words:
-            if word not in word_list:
-                word_list[word] = len(word_list)
+        i = 0
+        for line in fid:
+            words = extract_words(line)
+            for word in words:
+                if word in word_list:
+                    i = i
+                else:
+                    word_list[word] = i
+                    i += 1
+                
+        ### ========== TODO: END ========== ###
 
     return word_list
 
@@ -128,6 +134,22 @@ def extract_feature_vectors(infile, word_list):
     with open(infile, 'r') as fid:
         ### ========== TODO: START ========== ###
         # part 1-2: process each line to populate feature_matrix
+        
+        #My code Below doesnt work :(
+        # for line in fid:
+        #     words = extract_words(line)
+        #     row = 0
+        #     for word in words:
+
+        #         if word in word_list:
+        #             i = list(word_list).index(word)
+
+        #             feature_matrix[row,i] = 1
+        #         else:
+        #             print('wrong word my friend')
+        #     row += 1
+
+        #Sophia (My partner) code below works :)
         text = fid.read()
         lines = text.split('\n')
         for line in lines:
@@ -138,7 +160,10 @@ def extract_feature_vectors(infile, word_list):
                 else:
                     print("This word is not in the dictionary: " + word,
                            "located at line: ", lines.index(line))
-        #pass
+
+            
+                    
+            
         ### ========== TODO: END ========== ###
 
     return feature_matrix
@@ -167,7 +192,7 @@ def test_extract_feature_vectors(X):
     err = 'extract_features_vectors implementation incorrect'
 
     assert X.shape == (630, 1811)
-
+    
     exp = np.array([[ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.],
                     [ 1.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  0.,  1.],
                     [ 0.,  1.,  0.,  0.,  0.,  0.,  0.,  0.,  1.,  1.],
@@ -210,32 +235,25 @@ def performance(y_true, y_pred, metric='accuracy'):
     ### ========== TODO: START ========== ###
     # part 2-1: compute classifier performance with sklearn metrics
     # hint: sensitivity == recall
-    # hint: use confusion matrix for specificity (use the labels param) ^^^^
+    # hint: use confusion matrix for specificity (use the labels param)
     if metric == 'accuracy':
         return metrics.accuracy_score(y_true, y_label)
     elif metric == 'f1_score':
         return metrics.f1_score(y_true, y_label)
-    elif metric == 'auroc': #WHY IS THIS NOT WORKING
-        #print(metrics.roc_auc_score(y_true, y_label))
+    elif metric == 'auroc':
         return metrics.roc_auc_score(y_true, y_label)
     elif metric == 'precision':
         return metrics.precision_score(y_true, y_label)
     elif metric == 'sensitivity':
-        ## looks like we could potentially use recall_score instead of sensitivity (according to copilot)
-        ## looks ike we could also use the confusion matrix to get sensitivity
         return metrics.recall_score(y_true, y_label)
-    elif metric == 'specificity':
-
-        ## copilot code
-        #tp, fp, fn, tn = metrics.confusion_matrix(y_true, y_label).ravel()
-
-        ## my code I'M HONESTLY NOT SURE IF THIS WORKS / IS CORRECT 
-        cm = metrics.confusion_matrix(y_true, y_label, labels=[1,-1]) #1 is for positive, -1 is for negative    
+    elif metric == 'specificty':
+        cm = metrics.confusion_matrix(y_true, y_label, labels = [1, -1])
+        
         tp = cm[0,0]
         fn = cm[0,1]
         fp = cm[1,0]
-        tn = cm[1,1]
-        return tp, fp, fn, tn
+        tn = cm[1,1]  
+        return tp, fp, fn, tn      
 
     return 0
     ### ========== TODO: END ========== ###
@@ -252,7 +270,7 @@ def test_performance():
 
     import sys
     eps = sys.float_info.epsilon
-
+    print(eps)
     for i, metric in enumerate(metrics):
         assert abs(performance(y_true, y_pred, metric) - scores[i]) < eps, \
             (metric, performance(y_true, y_pred, metric), scores[i])
@@ -314,29 +332,29 @@ def select_param_linear(X, y, kf, metric='accuracy'):
 
     print('Linear SVM Hyperparameter Selection based on ' + str(metric) + ':')
     C_range = 10.0 ** np.arange(-3, 3)
-
+    
     ### ========== TODO: START ========== ###
     # part 2-3: select optimal hyperparameter using cross-validation
     # hint: create a new sklearn linear SVC for each value of C
-    # hint: you can reuse cv_performance(...)
-    # choose a setting for C for a linear SVM based on the training data and the specified metric.
 
-    # clf = SVC(kernel='linear', C=C_range[0])
-    # best_score = cv_performance(clf, X, y, kf, metric)
-    # best_C = C_range[0]
-    C_range = 10.0 ** np.arange(-3, 3)
-    for C in C_range:
-        clf = SVC(kernel='linear', C=C)
-        score = cv_performance(clf, X, y, kf, metric)
-        if score > best_score:
-            best_score = score
-            best_C = C  
+    C_score = 'initial'
+    Optimal_C = 0
 
-    return best_C
+    #For each value of C, run the cv_performance and create an array of scores.
+    for C_value in C_range:
+        LinearSVC = SVC(kernel = 'linear', C = C_value)
+        score = cv_performance(LinearSVC, X , y , kf , metric)
+        print('For a value of C = ' + str(C_value) + ', the score = ' + str(score))
+        
+        if C_score == 'initial' or score > C_score:
+        
+            C_score = score
+            Optimal_C = C_value
+    
+   
 
-
-
-   # return 1.0
+    print('Optimal C = ' + str(Optimal_C))
+    return Optimal_C
     ### ========== TODO: END ========== ###
 
 
@@ -362,9 +380,29 @@ def select_param_rbf(X, y, kf, metric='accuracy'):
 
     print('RBF SVM Hyperparameter Selection based on ' + str(metric) + ':')
 
+ 
     ### ========== TODO: START ========== ###
     # (Optional) part 3-1: create grid, then select optimal hyperparameters using cross-validation
-    return 0.0, 1.0
+    C_range = 10.0 ** np.arange(-3, 3)
+    Gamma_range = 10.0 ** np.arange(-3, 3)
+    Grid_score = 'initial'
+
+    for C_value in C_range:
+            for Gamma_value in Gamma_range:
+                RBFKernelSVC = SVC(kernel='rbf', C = C_value, gamma = Gamma_value)
+                score = cv_performance(RBFKernelSVC, X , y , kf , metric)
+                print('For a value of C , Gamma = ' + str(C_value) + ' , ' + str(Gamma_value) + ': the score = ' + str(score))
+            
+                if Grid_score == 'initial' or score > Grid_score:
+                
+                    Grid_score = score
+                    Optimal_C = C_value
+                    Optimal_Gamma = Gamma_value
+
+
+
+    print('Optimal C , Gamma = ' + str(Optimal_C) + ' , ' + str(Optimal_Gamma))
+    return Optimal_C, Optimal_Gamma
     ### ========== TODO: END ========== ###
 
 
@@ -405,11 +443,13 @@ def performance_CI(clf, X, y, metric='accuracy'):
 
 def main():
     # read the tweets and its labels
-    dictionary = extract_dictionary('../data/tweets.txt')
+    dictionary = extract_dictionary('C:/Users/1149896/Documents/cmsi-5350/ps4-donwualu/data/tweets.txt')
     test_extract_dictionary(dictionary)
-    X = extract_feature_vectors('../data/tweets.txt', dictionary)
+    
+    X = extract_feature_vectors('C:/Users/1149896/Documents/cmsi-5350/ps4-donwualu/data/tweets.txt', dictionary)
     test_extract_feature_vectors(X)
-    y = read_vector_file('../data/labels.txt')
+
+    y = read_vector_file('C:/Users/1149896/Documents/cmsi-5350/ps4-donwualu/data/labels.txt')
 
     # shuffle data (since file has tweets ordered by movie)
     X, y = shuffle(X, y, random_state=0)
@@ -423,23 +463,32 @@ def main():
 
     metric_list = ['accuracy', 'f1_score', 'auroc', 'precision', 'sensitivity', 'specificity']
 
-    ### ========== TODO: START ========== ###
-    test_performance()
+    ## ========== TODO: START ========== ###
+    #test_performance()
 
     # part 2-2: create stratified folds (5-fold CV)
-    #make sure to stratify using only the trianed labels
-    #shuffle the data and set the random state
-    skf = StratifiedKFold(n_splits=5, shuffle=True, random_state=1234)
 
+    # SKF = StratifiedKFold(n_splits=5, shuffle=True, random_state=1234)
 
-
-
+    # C = select_param_linear(X, y, SKF, metric='accuracy')
+  
 
     # part 2-4: for each metric, select optimal hyperparameter for linear-kernel SVM using CV
+  
+    # for metric in list, go through and pring C values, then decide which ones highest
+    # #Prints out every single value for C for the 'linear' SVC and then prints highest score
+    # for metric in metric_list:
+    #     select_param_linear(X_train, y_train, SKF, metric = metric)
+    
 
-    # (Optional) part 3-2: for each metric, select optimal hyperparameter for RBF-SVM using CV
+    # # (Optional) part 3-2: for each metric, select optimal hyperparameter for RBF-SVM using CV
+    # #Prints out every single value for C and gamma for the 'rbf' SVC and then prints highest score
+    # for metric in metric_list:
+    #     select_param_rbf(X_train, y_train, SKF, metric = metric)
 
     # part 4-1: train linear-kernal SVM with selected hyperparameters
+    LinearSVC = SVC(kernel = 'linear', C = 1.0)
+    LinearSVC.fit(X_train,y_train)
     # part 4-3: use bootstrapping to report performance on test data
 
     # part 5: identify important features (hint: use best_clf.coef_[0])
