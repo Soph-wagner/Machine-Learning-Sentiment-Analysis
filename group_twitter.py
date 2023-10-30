@@ -127,7 +127,6 @@ def extract_feature_vectors(infile, word_list):
     feature_matrix = np.zeros((num_lines, num_words))
 
     with open(infile, 'r') as fid:
-        ### ========== TODO: START ========== ###
         # part 1-2: process each line to populate feature_matrix
         
         #My code Below doesnt work :(
@@ -155,11 +154,6 @@ def extract_feature_vectors(infile, word_list):
                 else:
                     print("This word is not in the dictionary: " + word,
                            "located at line: ", lines.index(line))
-
-            
-                    
-            
-        ### ========== TODO: END ========== ###
 
     return feature_matrix
 
@@ -235,7 +229,7 @@ def performance(y_true, y_pred, metric='accuracy'):
     elif metric == 'f1_score':
         return metrics.f1_score(y_true, y_label)
     elif metric == 'auroc':
-        return metrics.roc_auc_score(y_true, y_label)
+        return metrics.roc_auc_score(y_true, y_pred)
     elif metric == 'precision':
         return metrics.precision_score(y_true, y_label)
     elif metric == 'sensitivity':
@@ -349,7 +343,6 @@ def select_param_linear(X, y, kf, metric='accuracy'):
 
     print('Optimal C = ' + str(Optimal_C))
     return Optimal_C
-    ### ========== TODO: END ========== ###
 
 
 def select_param_rbf(X, y, kf, metric='accuracy'):
@@ -375,10 +368,9 @@ def select_param_rbf(X, y, kf, metric='accuracy'):
     print('RBF SVM Hyperparameter Selection based on ' + str(metric) + ':')
 
  
-    ### ========== TODO: START ========== ###
     # (Optional) part 3-1: create grid, then select optimal hyperparameters using cross-validation
     C_range = 10.0 ** np.arange(-3, 3)
-    Gamma_range = 10.0 ** np.arange(-3, 3)
+    Gamma_range = 10.0 ** np.arange(-5, 2)
     Grid_score = 'initial'
 
     for C_value in C_range:
@@ -394,10 +386,9 @@ def select_param_rbf(X, y, kf, metric='accuracy'):
                     Optimal_Gamma = Gamma_value
 
 
-
-    print('Optimal C , Gamma = ' + str(Optimal_C) + ' , ' + str(Optimal_Gamma))
+    print('For the metric: ' + metric + '...')
+    print('Optimal C , Gamma => ' + '(C: ' + str(Optimal_C) + ' , ' + 'Gamma: ' + str(Optimal_Gamma) + ')')
     return Optimal_C, Optimal_Gamma
-    ### ========== TODO: END ========== ###
 
 
 def performance_CI(clf, X, y, metric='accuracy'):
@@ -483,7 +474,7 @@ def main():
     metric_list = ['accuracy', 'f1_score', 'auroc', 'precision', 'sensitivity', 'specificity']
 
     ## ========== TODO: START ========== ###
-    #test_performance()
+    test_performance()
 
     # part 2-2: create stratified folds (5-fold CV)
 
@@ -501,8 +492,8 @@ def main():
 
     # # (Optional) part 3-2: for each metric, select optimal hyperparameter for RBF-SVM using CV
     # #Prints out every single value for C and gamma for the 'rbf' SVC and then prints highest score
-    # for metric in metric_list:
-    #     select_param_rbf(X_train, y_train, SKF, metric = metric)
+    for metric in metric_list:
+        select_param_rbf(X_train, y_train, SKF, metric = metric)
 
     # part 4-1: train linear-kernal SVM with selected hyperparameters
     LinearSVC = SVC(kernel = 'linear', C = c)
@@ -544,7 +535,7 @@ def main():
     for i in range(len(X)):
         if X[i][0] == 1:
             num_of_2012 += 1
-            print(i)
+            #print(i)
             # print('label of corresponding tweet: ')
             # print(y[i])
             if y[i] == 1:
